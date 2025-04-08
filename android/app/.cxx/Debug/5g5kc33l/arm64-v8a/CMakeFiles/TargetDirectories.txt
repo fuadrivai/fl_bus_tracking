@@ -1,0 +1,2 @@
+C:/Users/fuads/OneDrive/Desktop/Flutter/bus_tracking/android/app/.cxx/Debug/5g5kc33l/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/fuads/OneDrive/Desktop/Flutter/bus_tracking/android/app/.cxx/Debug/5g5kc33l/arm64-v8a/CMakeFiles/rebuild_cache.dir
