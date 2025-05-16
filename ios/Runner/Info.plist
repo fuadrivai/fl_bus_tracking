@@ -47,5 +47,8 @@
 	<true/>
 	<key>UIBackgroundModes</key>
 	<string>location</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+<string>This app needs location access to show your live location.</string>
+
 </dict>
 </plist>

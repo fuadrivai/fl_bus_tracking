@@ -1,5 +1,5 @@
 import 'package:bus_tracking/library/library.dart';
-import 'package:bus_tracking/screen/screen.dart';
+import 'package:bus_tracking/pages/screen.dart';
 import 'package:flutter/material.dart';
 
 class HomeV2Screen extends StatefulWidget {

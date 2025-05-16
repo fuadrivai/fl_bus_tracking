@@ -4,7 +4,7 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'package:bus_tracking/library/library.dart';
 import 'package:bus_tracking/main.dart';
-import 'package:bus_tracking/screen/screen.dart';
+import 'package:bus_tracking/pages/screen.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:bus_tracking/library/library.dart';
-import 'package:bus_tracking/screen/screen.dart';
+import 'package:bus_tracking/pages/screen.dart';
 import 'package:bus_tracking/widget/widget.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';

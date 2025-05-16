@@ -1,8 +1,12 @@
+// ignore_for_file: avoid_print
+
 import 'dart:convert';
 import 'dart:io';
-
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
+    as bg;
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class Common {
@@ -102,6 +106,76 @@ class Common {
     final file = File(imagePath);
     final bytes = await file.readAsBytes();
     return base64Encode(bytes);
+  }
+
+  static Future<Position> determinePosition() async {
+    LocationPermission permission;
+    LocationSettings locationSettings;
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        Geolocator.openLocationSettings();
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      Geolocator.openLocationSettings();
+    }
+    if (Platform.isAndroid) {
+      locationSettings = AndroidSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10,
+      );
+    } else if (Platform.isIOS) {
+      locationSettings = AppleSettings(
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 10,
+      );
+    } else {
+      locationSettings = const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10,
+      );
+    }
+    return await Geolocator.getCurrentPosition(
+      locationSettings: locationSettings,
+    );
+  }
+
+  static Stream<Position> getLiveLocation() {
+    return Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10, // meters
+      ),
+    );
+  }
+
+  void initBackgroundTracking() {
+    bg.BackgroundGeolocation.onLocation((bg.Location location) {
+      print('[location] - $location');
+      // send to server or update UI
+    });
+
+    bg.BackgroundGeolocation.ready(bg.Config(
+      desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
+      distanceFilter: 10.0,
+      stopOnTerminate: false,
+      startOnBoot: true,
+      enableHeadless: true,
+      backgroundPermissionRationale: bg.PermissionRationale(
+          title:
+              "Allow {applicationName} to access this device's location even when closed or not in use.",
+          message:
+              "This app collects location data to enable tracking even when the app is closed or not in use.",
+          positiveAction: "Change to 'Allow all the time'",
+          negativeAction: "Cancel"),
+    )).then((bg.State state) {
+      if (!state.enabled) {
+        bg.BackgroundGeolocation.start();
+      }
+    });
   }
 }
 

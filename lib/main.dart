@@ -1,7 +1,6 @@
 import 'dart:io';
-
 import 'package:bus_tracking/library/library.dart';
-import 'package:bus_tracking/screen/home_v2.dart';
+import 'package:bus_tracking/pages/home/screen/home_v2.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
