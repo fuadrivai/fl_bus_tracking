@@ -10,7 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 class CameraScreen extends StatefulWidget {
-  const CameraScreen({super.key});
+  final String nopol;
+  const CameraScreen({super.key, required this.nopol});
 
   @override
   State<CameraScreen> createState() => _CameraScreenState();
@@ -28,13 +29,6 @@ class _CameraScreenState extends State<CameraScreen>
         enableTracking: true,
         enableClassification: true),
   );
-  // final faceDetector = GoogleMlKit.vision.faceDetector(
-  //   FaceDetectorOptions(
-  //     enableTracking: true,
-  //     enableContours: true,
-  //     enableClassification: true,
-  //   ),
-  // );
 
   @override
   void initState() {
@@ -188,11 +182,13 @@ class _CameraScreenState extends State<CameraScreen>
     } else {
       String? image = await Common.imageToBase64(file.path);
       Session.set("image", image ?? "");
+      Session.set("nopol", widget.nopol);
       faceDetector.close();
       if (context.mounted) {
         Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => const StudentScreen()),
+            MaterialPageRoute(
+                builder: (context) => StudentScreen(nopol: widget.nopol)),
             (route) => false);
       }
     }

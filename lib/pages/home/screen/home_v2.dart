@@ -50,7 +50,8 @@ class _HomeV2ScreenState extends State<HomeV2Screen> {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const CameraScreen(),
+                                    builder: (context) => CameraScreen(
+                                        nopol: platController.text),
                                   ));
                             }
                           },

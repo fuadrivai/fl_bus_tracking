@@ -26,7 +26,7 @@ class Pickup {
     data['childID'] = childID;
     data['childDivision'] = childDivision;
     data['childDriver'] = childDriver;
-    data['mode'] = mode;
+    data['action'] = mode;
     return data;
   }
 }
