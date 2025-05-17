@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:bus_tracking/library/library.dart';
+import 'package:bus_tracking/models/model.dart';
 import 'package:bus_tracking/pages/screen.dart';
 import 'package:bus_tracking/pages/student/data/student_api.dart';
 import 'package:bus_tracking/widget/widget.dart';
@@ -52,17 +53,35 @@ class _StudentScreenState extends State<StudentScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const TextTitle(title: "Informasi Driver"),
-            Container(
-              decoration: const BoxDecoration(color: Colors.white),
-              child: Padding(
-                padding: const EdgeInsets.all(6.0),
-                child: loading
-                    ? const DriverShimmer(height: 150)
-                    : Row(
+        child: FutureBuilder(
+            future: StudentApi.getPickups(params: {"nopol": widget.nopol}),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: List.generate(5, (index) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 4.0,
+                        horizontal: 8,
+                      ),
+                      child: StudentShimmer(),
+                    );
+                  }).toList(),
+                );
+              }
+              if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const TextTitle(title: "Informasi Driver"),
+                  Container(
+                    decoration: const BoxDecoration(color: Colors.white),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6.0),
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -79,20 +98,20 @@ class _StudentScreenState extends State<StudentScreen> {
                           ),
                           SizedBox(
                             width: size.width * 60 / 85,
-                            child: const Column(
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "A1234GB",
-                                  style: TextStyle(
+                                  snapshot.data?.nopol ?? "--",
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 25,
                                     color: Color.fromARGB(255, 112, 112, 112),
                                   ),
                                 ),
                                 Text(
-                                  "Muhammad Yusuf Baharudin Gemilang",
-                                  style: TextStyle(
+                                  snapshot.data?.driverName ?? "--",
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 17,
                                     color: Color.fromARGB(255, 112, 112, 112),
@@ -103,86 +122,68 @@ class _StudentScreenState extends State<StudentScreen> {
                           )
                         ],
                       ),
-              ),
-            ),
-            const TextTitle(title: "Daftar Siswa"),
-            FutureBuilder(
-                future: StudentApi.getPickups(params: {"nopol": widget.nopol}),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: List.generate(5, (index) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 4.0,
-                            horizontal: 8,
-                          ),
-                          child: StudentShimmer(),
-                        );
-                      }).toList(),
-                    );
-                  }
+                    ),
+                  ),
+                  const TextTitle(title: "Daftar Siswa"),
+                  ListStudentWidget(pickups: snapshot.data?.students ?? []),
+                ],
+              );
+            }),
+      ),
+    );
+  }
+}
 
-                  if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  }
+class ListStudentWidget extends StatelessWidget {
+  final List<Student> pickups;
+  const ListStudentWidget({super.key, required this.pickups});
 
-                  return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
-                    color: Colors.white,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: ListTile.divideTiles(
-                              context: context,
-                              tiles: (snapshot.data ?? []).map((student) {
-                                Color? color;
-                                switch (student.childDivision) {
-                                  case "Preschool":
-                                    color =
-                                        const Color.fromARGB(255, 241, 220, 26);
-                                    break;
-                                  case "Primary":
-                                    color =
-                                        const Color.fromARGB(255, 26, 118, 29);
-                                    break;
-                                  case "Secondary":
-                                    color =
-                                        const Color.fromARGB(255, 15, 97, 164);
-                                    break;
-                                  default:
-                                    color =
-                                        const Color.fromARGB(255, 130, 19, 150);
-                                }
-                                return CheckboxListTile(
-                                  onChanged: (value) {},
-                                  value: true,
-                                  dense: false,
-                                  visualDensity:
-                                      const VisualDensity(vertical: -1),
-                                  controlAffinity:
-                                      ListTileControlAffinity.platform,
-                                  title: Text(
-                                    student.childName ?? "-",
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  subtitle: Text(student.childDivision ?? "-"),
-                                  secondary: Icon(
-                                    FontAwesomeIcons.userAstronaut,
-                                    size: 35,
-                                    color: color,
-                                  ),
-                                );
-                              }).toList())
-                          .toList(),
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: ListTile.divideTiles(
+                context: context,
+                tiles: pickups.map((student) {
+                  Color? color;
+                  switch (student.childDivision) {
+                    case "Preschool":
+                      color = const Color.fromARGB(255, 241, 220, 26);
+                      break;
+                    case "Primary":
+                      color = const Color.fromARGB(255, 26, 118, 29);
+                      break;
+                    case "Secondary":
+                      color = const Color.fromARGB(255, 15, 97, 164);
+                      break;
+                    default:
+                      color = const Color.fromARGB(255, 130, 19, 150);
+                  }
+                  return CheckboxListTile(
+                    onChanged: (value) {},
+                    value: true,
+                    dense: false,
+                    visualDensity: const VisualDensity(vertical: -1),
+                    controlAffinity: ListTileControlAffinity.platform,
+                    title: Text(
+                      student.childName ?? "-",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                    subtitle: Text(student.childDivision ?? "-"),
+                    secondary: Icon(
+                      FontAwesomeIcons.userAstronaut,
+                      size: 35,
+                      color: color,
                     ),
                   );
-                }),
-          ],
-        ),
+                }).toList())
+            .toList(),
       ),
     );
   }

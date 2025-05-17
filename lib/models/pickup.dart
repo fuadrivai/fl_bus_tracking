@@ -1,32 +1,30 @@
-class Pickup {
-  String? childName;
-  String? childID;
-  String? childDivision;
-  String? childDriver;
-  String? mode;
+import 'package:bus_tracking/models/model.dart';
 
-  Pickup(
-      {this.childName,
-      this.childID,
-      this.childDivision,
-      this.childDriver,
-      this.mode});
+class Pickup {
+  String? nopol;
+  String? driverName;
+  List<Student>? students;
+
+  Pickup({this.nopol, this.driverName, this.students});
 
   Pickup.fromJson(Map<String, dynamic> json) {
-    childName = json['childName'];
-    childID = json['childID'];
-    childDivision = json['childDivision'];
-    childDriver = json['childDriver'];
-    mode = json['mode'];
+    nopol = json['nopol'];
+    driverName = json['driverName'];
+    if (json['students'] != null) {
+      students = <Student>[];
+      json['students'].forEach((v) {
+        students!.add(Student.fromJson(v));
+      });
+    }
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    data['childName'] = childName;
-    data['childID'] = childID;
-    data['childDivision'] = childDivision;
-    data['childDriver'] = childDriver;
-    data['action'] = mode;
+    data['nopol'] = nopol;
+    data['driverName'] = driverName;
+    if (students != null) {
+      data['students'] = students!.map((v) => v.toJson()).toList();
+    }
     return data;
   }
 }
