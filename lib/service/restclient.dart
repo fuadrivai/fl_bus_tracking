@@ -10,4 +10,7 @@ abstract class RestClient {
 
   @GET("")
   Future<Pickup> getPickups();
+
+  @POST("")
+  Future<dynamic> saveCheckList(@Body() List<Student> students);
 }

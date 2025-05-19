@@ -1,6 +1,8 @@
 import 'package:bus_tracking/library/library.dart';
 import 'package:bus_tracking/pages/screen.dart';
+import 'package:bus_tracking/widget/widget.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 
 class HomeV2Screen extends StatefulWidget {
   const HomeV2Screen({super.key});
@@ -12,6 +14,15 @@ class HomeV2Screen extends StatefulWidget {
 class _HomeV2ScreenState extends State<HomeV2Screen> {
   final formKey = GlobalKey<FormState>();
   TextEditingController platController = TextEditingController();
+  final GeolocatorPlatform _geolocatorPlatform = GeolocatorPlatform.instance;
+
+  @override
+  void initState() {
+    _geolocatorPlatform.getServiceStatusStream();
+    Common.determinePosition();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,7 +55,8 @@ class _HomeV2ScreenState extends State<HomeV2Screen> {
                       ),
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0),
-                        child: GestureDetector(
+                        child: CustomButton(
+                          label: 'Submit',
                           onTap: () {
                             if (formKey.currentState!.validate()) {
                               Navigator.push(
@@ -55,24 +67,6 @@ class _HomeV2ScreenState extends State<HomeV2Screen> {
                                   ));
                             }
                           },
-                          child: Container(
-                            width: MediaQuery.of(context).size.width,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.blueAccent,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Center(
-                              child: Text(
-                                "Submit",
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
                         ),
                       )
                     ],

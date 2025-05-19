@@ -14,6 +14,7 @@ class Api {
     dio.options.headers["Authorization"] = await Session.get("token");
     dio.options.headers["Content-Type"] = "application/json";
     dio.options.headers["Accept"] = "*/*";
+    dio.options.headers["Access-Control-Allow-Origin"] = "*";
     dio.options.queryParameters = params ?? {};
     return RestClient(dio, baseUrl: baseurl ?? baseUrl);
   }
