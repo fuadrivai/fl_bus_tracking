@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:badges/badges.dart' as badge;
+import 'package:flutter/material.dart';
 
-class CustomBadge extends StatelessWidget {
+class CustomeBadge extends StatelessWidget {
   final Color? backgroundColor;
   final BorderSide? borderSide;
   final double? width;
@@ -10,7 +10,7 @@ class CustomBadge extends StatelessWidget {
   final Widget? icon;
   final String text;
   final GestureTapCallback? onTap;
-  const CustomBadge({
+  const CustomeBadge({
     super.key,
     this.backgroundColor,
     this.borderSide,

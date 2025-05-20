@@ -1,8 +1,7 @@
-// ignore_for_file: avoid_print
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -101,9 +100,15 @@ class Common {
   }
 
   static Future<String?> imageToBase64(String imagePath) async {
-    final file = File(imagePath);
-    final bytes = await file.readAsBytes();
-    return base64Encode(bytes);
+    // final file = File(imagePath);
+    var result = await FlutterImageCompress.compressWithFile(
+      File(imagePath).absolute.path,
+      minWidth: 1000,
+      minHeight: 500,
+      quality: 94,
+      // rotate: 90,
+    );
+    return base64Encode(result as List<int>);
   }
 
   static Future<Position> determinePosition() async {

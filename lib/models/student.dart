@@ -1,16 +1,23 @@
+import 'package:floor/floor.dart';
+
+@entity
 class Student {
-  String? childName;
+  @primaryKey
   String? childID;
+  String? childName;
   String? childDivision;
   String? childDriver;
   String? mode;
+  String? action;
 
-  Student(
-      {this.childName,
-      this.childID,
-      this.childDivision,
-      this.childDriver,
-      this.mode});
+  Student({
+    this.childName,
+    this.childID,
+    this.childDivision,
+    this.childDriver,
+    this.mode,
+    this.action,
+  });
 
   Student.fromJson(Map<String, dynamic> json) {
     childName = json['childName'];
@@ -26,7 +33,7 @@ class Student {
     data['childID'] = childID;
     data['childDivision'] = childDivision;
     data['childDriver'] = childDriver;
-    data['action'] = mode;
+    data['action'] = action;
     return data;
   }
 }

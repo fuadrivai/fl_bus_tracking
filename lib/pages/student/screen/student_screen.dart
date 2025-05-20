@@ -1,32 +1,67 @@
+// ignore_for_file: avoid_print
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
+import 'package:bus_tracking/dao/student_dao.dart';
 import 'package:bus_tracking/library/library.dart';
 import 'package:bus_tracking/models/model.dart';
+import 'package:bus_tracking/pages/home/data/home_api.dart';
 import 'package:bus_tracking/pages/screen.dart';
 import 'package:bus_tracking/pages/student/data/student_api.dart';
+import 'package:bus_tracking/service/database_service.dart';
 import 'package:bus_tracking/widget/widget.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:path/path.dart';
 
 class StudentScreen extends StatefulWidget {
+  final File file;
   final String nopol;
-  const StudentScreen({super.key, required this.nopol});
+  const StudentScreen({super.key, required this.nopol, required this.file});
 
   @override
   State<StudentScreen> createState() => _StudentScreenState();
 }
 
-class _StudentScreenState extends State<StudentScreen> {
+class _StudentScreenState extends State<StudentScreen>
+    with WidgetsBindingObserver {
   Uint8List? image;
+  Timer? _timer;
   Future<Pickup>? _pickup;
   List<Student> students = [];
+  List<Student> studentDb = [];
+  bool isLoading = false;
+  int index = 0;
   final GeolocatorPlatform _geolocatorPlatform = GeolocatorPlatform.instance;
+  final databaseService = DatabaseService();
 
   @override
   void initState() {
     onInit();
+    saveDriverInformation();
     super.initState();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive) {
+      setTimeInterval();
+    } else if (state == AppLifecycleState.paused) {
+      setTimeInterval();
+    } else if (state == AppLifecycleState.resumed) {
+      setTimeInterval();
+    } else {
+      setTimeInterval();
+    }
+    super.didChangeAppLifecycleState(state);
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // Cancel the timer to avoid memory leaks
+    super.dispose();
   }
 
   @override
@@ -37,11 +72,19 @@ class _StudentScreenState extends State<StudentScreen> {
         title: const Text("Daftar Siswa"),
         actions: [
           IconButton(
-            onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const HomeV2Screen()),
-                  (route) => false);
+            onPressed: () async {
+              final db = await databaseService.database;
+              StudentDao studentDao = db.studentDao;
+              List<Student> studentDB = await studentDao.findAllStudent();
+              await studentDao.deleteAllStudent(studentDB);
+              _timer?.cancel();
+              if (context.mounted) {
+                Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const HomeV2Screen()),
+                    (route) => false);
+              }
             },
             icon: const Icon(
               FontAwesomeIcons.powerOff,
@@ -57,7 +100,8 @@ class _StudentScreenState extends State<StudentScreen> {
           child: FutureBuilder(
               future: _pickup,
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (isLoading ||
+                    snapshot.connectionState == ConnectionState.waiting) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: List.generate(5, (index) {
@@ -74,6 +118,11 @@ class _StudentScreenState extends State<StudentScreen> {
                 if (snapshot.hasError) {
                   return Text('Error: ${snapshot.error}');
                 }
+                List<Student> compareStudent = (snapshot.data?.students ?? [])
+                    .where((data1) => !studentDb
+                        .any((data2) => data1.childID == data2.childID))
+                    .toList();
+
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -126,23 +175,56 @@ class _StudentScreenState extends State<StudentScreen> {
                       ),
                     ),
                     Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 5.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          CustomeBadge(
+                            text: "Berangkat",
+                            backgroundColor:
+                                index == 0 ? Colors.blueAccent : null,
+                            width: MediaQuery.of(context).size.width * 45 / 100,
+                            onTap: () {
+                              index = 0;
+                              setState(() {});
+                            },
+                          ),
+                          CustomeBadge(
+                            text: "Sampai",
+                            backgroundColor:
+                                index == 1 ? Colors.blueAccent : null,
+                            width: MediaQuery.of(context).size.width * 45 / 100,
+                            onTap: () {
+                              index = 1;
+                              setState(() {});
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          TextTitle(
-                              title:
-                                  "Daftar Siswa : ${(snapshot.data?.students ?? []).length}"),
+                          index == 0
+                              ? TextTitle(
+                                  title:
+                                      "Daftar Siswa : ${compareStudent.length}")
+                              : TextTitle(
+                                  title: "Daftar Siswa : ${studentDb.length}"),
                           TextTitle(title: "Dipilih : ${students.length}"),
                         ],
                       ),
                     ),
                     ListStudentWidget(
-                      data: snapshot.data?.students ?? [],
+                      data: index == 0 ? compareStudent : studentDb,
                       students: students,
                       onChanged: (value, student) {
                         if (value ?? true) {
+                          student.action = index == 0 ? "Pickup" : "Arrived";
                           students.add(student);
+                          setState(() {});
                         } else {
                           students.removeWhere(
                               (val) => val.childID == student.childID);
@@ -157,14 +239,24 @@ class _StudentScreenState extends State<StudentScreen> {
                       ),
                       child: CustomButton(
                         label: "Simpan Check List",
-                        onTap: () {
+                        onTap: () async {
+                          isLoading = true;
+                          setState(() {});
                           StudentApi.saveChecklist(
                             params: {
                               "nopol": widget.nopol,
                               "endpoint": "saveCheckList"
                             },
-                            students: students,
-                          ).then((val) {
+                            students: students.map((v) => v.toJson()).toList(),
+                          ).then((val) async {
+                            final db = await databaseService.database;
+                            StudentDao studentDao = db.studentDao;
+                            if (index == 0) {
+                              await studentDao.insertStudents(students);
+                            } else {
+                              await studentDao.deleteAllStudent(students);
+                            }
+                            studentDb = await studentDao.findAllStudent();
                             if (context.mounted) {
                               Common.modalInfo(context,
                                   title: 'Sukses',
@@ -173,7 +265,10 @@ class _StudentScreenState extends State<StudentScreen> {
                                     FontAwesomeIcons.circleCheck,
                                     color: Colors.green,
                                   ));
+                              students = [];
+                              isLoading = false;
                             }
+                            setState(() {});
                           });
                         },
                       ),
@@ -187,17 +282,64 @@ class _StudentScreenState extends State<StudentScreen> {
   }
 
   Future<void> _onRefresh() async {
-    setState(() {
-      _pickup = StudentApi.getPickups(params: {"nopol": widget.nopol});
-    });
+    _pickup = StudentApi.getPickups(params: {"nopol": widget.nopol});
+    setState(() {});
   }
 
   onInit() async {
-    _pickup = StudentApi.getPickups(params: {"nopol": widget.nopol});
-    _geolocatorPlatform.getServiceStatusStream();
-    await Common.determinePosition();
-    String? strImage = await Session.get("image");
-    image = base64Decode(strImage!);
+    try {
+      _pickup = StudentApi.getPickups(params: {"nopol": widget.nopol});
+      _geolocatorPlatform.getServiceStatusStream();
+      String? strImage = await Session.get("image");
+      image = base64Decode(strImage!);
+      Position position = await Common.determinePosition();
+      await StudentApi.startTracking(
+        params: {"nopol": widget.nopol, "endpoint": "start"},
+        location: {
+          "latitude": position.latitude,
+          "longitude": position.longitude
+        },
+      );
+      setTimeInterval();
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  setTimeInterval() async {
+    _timer = Timer.periodic(const Duration(seconds: 60), (timer) async {
+      Position position = await Common.determinePosition();
+      await StudentApi.startTracking(
+        params: {"nopol": widget.nopol, "endpoint": "start"},
+        location: {
+          "latitude": position.latitude,
+          "longitude": position.longitude
+        },
+      );
+      print("${position.latitude} - ${position.longitude}");
+      setState(() {});
+    });
+  }
+
+  saveDriverInformation() async {
+    try {
+      String filename = basename(widget.file.path);
+      String? base64Image = await Common.imageToBase64(widget.file.path);
+      Map<String, dynamic> param = {
+        "endpoint": "driver",
+        "mimeType": 'image/jpeg',
+        "filename": filename
+      };
+      Map<String, dynamic> map = {
+        "image": base64Image,
+        "nopol": widget.nopol,
+        "driverName": (await _pickup)?.driverName ?? "",
+        "action": (await _pickup)?.mode ?? "",
+      };
+      await HomeApi.clockin(params: param, map: map);
+    } catch (e) {
+      print(e);
+    }
   }
 }
 
@@ -225,7 +367,7 @@ class ListStudentWidget extends StatelessWidget {
                   Color? color;
                   switch (student.childDivision) {
                     case "Preschool":
-                      color = const Color.fromARGB(255, 241, 220, 26);
+                      color = const Color.fromARGB(255, 241, 173, 26);
                       break;
                     case "Primary":
                       color = const Color.fromARGB(255, 26, 118, 29);

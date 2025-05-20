@@ -12,5 +12,5 @@ abstract class RestClient {
   Future<Pickup> getPickups();
 
   @POST("")
-  Future<dynamic> saveCheckList(@Body() List<Student> students);
+  Future<dynamic> postAppScript(@Body() dynamic data);
 }

@@ -158,9 +158,6 @@ class _CameraScreenState extends State<CameraScreen>
     final filePicture = await cameraController!.takePicture();
     final file = File(filePicture.path);
 
-    List<String> filePathList = [];
-    filePathList.add(file.path.toString());
-
     final InputImage inputImage = InputImage.fromFile(file);
     final faceDetector = FaceDetector(
       options: FaceDetectorOptions(
@@ -181,14 +178,17 @@ class _CameraScreenState extends State<CameraScreen>
       }
     } else {
       String? image = await Common.imageToBase64(file.path);
-      Session.set("image", image ?? "");
-      Session.set("nopol", widget.nopol);
+      await Session.set("image", image ?? "");
+      await Session.set("nopol", widget.nopol);
+
       faceDetector.close();
       if (context.mounted) {
+        _stopCamera();
         Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
-                builder: (context) => StudentScreen(nopol: widget.nopol)),
+                builder: (context) =>
+                    StudentScreen(file: file, nopol: widget.nopol)),
             (route) => false);
       }
     }

@@ -9,9 +9,18 @@ class StudentApi {
   }
 
   static Future<dynamic> saveChecklist(
-      {Map<String, dynamic>? params, required List<Student> students}) async {
+      {Map<String, dynamic>? params,
+      required List<Map<String, dynamic>> students}) async {
     final client = await Api.restClient(params: params);
-    var data = client.saveCheckList(students);
+    var data = client.postAppScript(students);
+    return data;
+  }
+
+  static Future<dynamic> startTracking(
+      {Map<String, dynamic>? params,
+      required Map<String, dynamic> location}) async {
+    final client = await Api.restClient(params: params);
+    var data = client.postAppScript(location);
     return data;
   }
 }
