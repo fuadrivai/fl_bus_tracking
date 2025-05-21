@@ -20,7 +20,7 @@ class CameraScreen extends StatefulWidget {
 class _CameraScreenState extends State<CameraScreen>
     with WidgetsBindingObserver {
   CameraController? cameraController;
-  bool isDetecting = false;
+  bool isDetecting = false, isLoading = false;
 
   final FaceDetector faceDetector = FaceDetector(
     options: FaceDetectorOptions(
@@ -47,44 +47,57 @@ class _CameraScreenState extends State<CameraScreen>
           ((cameraController?.value.aspectRatio ?? 0) *
               MediaQuery.of(context).size.aspectRatio);
 
-      return Stack(
-        children: [
-          cameraPermission
-              ? Transform(
-                  alignment: Alignment.center,
-                  transform: Matrix4.rotationY(math.pi),
-                  child: Transform.scale(
-                    scale: scale,
-                    alignment: Alignment.topCenter,
-                    child: CameraPreview(
-                      cameraController!,
-                    ),
-                  ),
-                )
-              : const Text("Camera Tidak Tersedia"),
-          Scaffold(
-            backgroundColor: Colors.transparent,
-            floatingActionButton: FloatingActionButton(
-              backgroundColor: Colors.white,
-              isExtended: true,
-              onPressed: () => _takePicture(context),
-              child: Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Container(
-                  height: 150,
-                  width: 150,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.black, width: 5),
-                    borderRadius: BorderRadius.circular(50),
-                    color: Colors.white,
-                  ),
-                ),
+      return Scaffold(
+        appBar: AppBar(title: const Text("Ambil Gambar")),
+        // backgroundColor: Colors.transparent,
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: Colors.white,
+          isExtended: true,
+          onPressed: () => _takePicture(context),
+          child: Padding(
+            padding: const EdgeInsets.all(4.0),
+            child: Container(
+              height: 150,
+              width: 150,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.black, width: 5),
+                borderRadius: BorderRadius.circular(50),
+                color: Colors.white,
               ),
             ),
-            floatingActionButtonLocation:
-                FloatingActionButtonLocation.centerFloat,
-          )
-        ],
+          ),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        body: Stack(
+          children: [
+            cameraPermission
+                ? isLoading
+                    ? const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(
+                              backgroundColor: Colors.white,
+                              color: Colors.blueAccent,
+                            ),
+                            Text("Silahkan tunggu !")
+                          ],
+                        ),
+                      )
+                    : Transform(
+                        alignment: Alignment.center,
+                        transform: Matrix4.rotationY(math.pi),
+                        child: Transform.scale(
+                          scale: scale,
+                          alignment: Alignment.topCenter,
+                          child: CameraPreview(
+                            cameraController!,
+                          ),
+                        ),
+                      )
+                : const Text("Camera Tidak Tersedia"),
+          ],
+        ),
       );
     } else {
       return const Center(
@@ -154,6 +167,7 @@ class _CameraScreenState extends State<CameraScreen>
 
   _takePicture(BuildContext context) async {
     if (cameraController == null) return;
+    isLoading = true;
     setState(() {});
     final filePicture = await cameraController!.takePicture();
     final file = File(filePicture.path);
