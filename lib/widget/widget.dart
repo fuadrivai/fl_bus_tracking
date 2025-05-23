@@ -4,3 +4,5 @@ export 'package:bus_tracking/widget/student_shimmer.dart';
 export 'package:bus_tracking/widget/student_card.dart';
 export 'package:bus_tracking/widget/custom_button.dart';
 export 'package:bus_tracking/widget/custom_badge.dart';
+export 'package:bus_tracking/widget/slide_widget.dart';
+export 'package:bus_tracking/widget/exit_widget.dart';

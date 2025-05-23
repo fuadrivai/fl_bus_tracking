@@ -201,8 +201,10 @@ class _CameraScreenState extends State<CameraScreen>
         Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
-                builder: (context) =>
-                    StudentScreen(file: file, nopol: widget.nopol)),
+                builder: (context) => StudentScreen(
+                      file: file,
+                      isLogin: "false",
+                    )),
             (route) => false);
       }
     }

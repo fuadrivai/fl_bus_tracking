@@ -5,7 +5,7 @@ import 'package:bus_tracking/models/model.dart';
 import 'package:floor/floor.dart';
 part 'database.g.dart';
 
-@Database(version: 1, entities: [Student])
+@Database(version: 6, entities: [Student])
 abstract class AppDatabase extends FloorDatabase {
   StudentDao get studentDao;
 }

@@ -1,6 +1,6 @@
 import 'package:floor/floor.dart';
 
-@entity
+@Entity(tableName: 'Students')
 class Student {
   @primaryKey
   String? childID;
@@ -8,6 +8,7 @@ class Student {
   String? childDivision;
   String? childDriver;
   String? mode;
+  @ColumnInfo(name: 'action')
   String? action;
 
   Student({

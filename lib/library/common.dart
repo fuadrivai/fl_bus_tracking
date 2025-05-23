@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -39,9 +40,8 @@ class Common {
     String? message,
     required String title,
     Widget? icon,
+    Widget? buttonAction,
     MODE? mode,
-    bool? showAction,
-    GestureTapCallback? onTap,
   }) {
     showDialog(
       context: context,
@@ -85,10 +85,11 @@ class Common {
                     ),
                     const SizedBox(height: 20),
                     const Divider(),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text("Tutup"),
-                    ),
+                    buttonAction ??
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text("Tutup"),
+                        ),
                   ],
                 ),
               ),

@@ -80,7 +80,7 @@ class _$AppDatabase extends AppDatabase {
     Callback? callback,
   ]) async {
     final databaseOptions = sqflite.OpenDatabaseOptions(
-      version: 1,
+      version: 6,
       onConfigure: (database) async {
         await database.execute('PRAGMA foreign_keys = ON');
         await callback?.onConfigure?.call(database);
@@ -96,7 +96,7 @@ class _$AppDatabase extends AppDatabase {
       },
       onCreate: (database, version) async {
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `Student` (`childID` TEXT, `childName` TEXT, `childDivision` TEXT, `childDriver` TEXT, `mode` TEXT, PRIMARY KEY (`childID`))');
+            'CREATE TABLE IF NOT EXISTS `Students` (`childID` TEXT, `childName` TEXT, `childDivision` TEXT, `childDriver` TEXT, `mode` TEXT, `action` TEXT, PRIMARY KEY (`childID`))');
 
         await callback?.onCreate?.call(database, version);
       },
@@ -117,25 +117,40 @@ class _$StudentDao extends StudentDao {
   )   : _queryAdapter = QueryAdapter(database, changeListener),
         _studentInsertionAdapter = InsertionAdapter(
             database,
-            'Student',
+            'Students',
             (Student item) => <String, Object?>{
                   'childID': item.childID,
                   'childName': item.childName,
                   'childDivision': item.childDivision,
                   'childDriver': item.childDriver,
-                  'mode': item.mode
+                  'mode': item.mode,
+                  'action': item.action
                 },
             changeListener),
-        _studentDeletionAdapter = DeletionAdapter(
+        _studentUpdateAdapter = UpdateAdapter(
             database,
-            'Student',
+            'Students',
             ['childID'],
             (Student item) => <String, Object?>{
                   'childID': item.childID,
                   'childName': item.childName,
                   'childDivision': item.childDivision,
                   'childDriver': item.childDriver,
-                  'mode': item.mode
+                  'mode': item.mode,
+                  'action': item.action
+                },
+            changeListener),
+        _studentDeletionAdapter = DeletionAdapter(
+            database,
+            'Students',
+            ['childID'],
+            (Student item) => <String, Object?>{
+                  'childID': item.childID,
+                  'childName': item.childName,
+                  'childDivision': item.childDivision,
+                  'childDriver': item.childDriver,
+                  'mode': item.mode,
+                  'action': item.action
                 },
             changeListener);
 
@@ -147,31 +162,75 @@ class _$StudentDao extends StudentDao {
 
   final InsertionAdapter<Student> _studentInsertionAdapter;
 
+  final UpdateAdapter<Student> _studentUpdateAdapter;
+
   final DeletionAdapter<Student> _studentDeletionAdapter;
 
   @override
   Future<List<Student>> findAllStudent() async {
-    return _queryAdapter.queryList('SELECT * FROM Student',
+    return _queryAdapter.queryList('SELECT * FROM Students',
         mapper: (Map<String, Object?> row) => Student(
             childName: row['childName'] as String?,
             childID: row['childID'] as String?,
             childDivision: row['childDivision'] as String?,
             childDriver: row['childDriver'] as String?,
-            mode: row['mode'] as String?));
+            mode: row['mode'] as String?,
+            action: row['action'] as String?));
+  }
+
+  @override
+  Future<List<Student>> findByAction(String action) async {
+    return _queryAdapter.queryList(
+        'SELECT * FROM Students WHERE action = ?1 ORDER BY childID ASC',
+        mapper: (Map<String, Object?> row) => Student(
+            childName: row['childName'] as String?,
+            childID: row['childID'] as String?,
+            childDivision: row['childDivision'] as String?,
+            childDriver: row['childDriver'] as String?,
+            mode: row['mode'] as String?,
+            action: row['action'] as String?),
+        arguments: [action]);
   }
 
   @override
   Stream<Student?> findStudentById(int id) {
-    return _queryAdapter.queryStream('SELECT * FROM Student WHERE childID = ?1',
+    return _queryAdapter.queryStream(
+        'SELECT * FROM Students WHERE childID = ?1',
         mapper: (Map<String, Object?> row) => Student(
             childName: row['childName'] as String?,
             childID: row['childID'] as String?,
             childDivision: row['childDivision'] as String?,
             childDriver: row['childDriver'] as String?,
-            mode: row['mode'] as String?),
+            mode: row['mode'] as String?,
+            action: row['action'] as String?),
         arguments: [id],
-        queryableName: 'Student',
+        queryableName: 'Students',
         isView: false);
+  }
+
+  @override
+  Future<int?> updateActionStudent(
+    String action,
+    int id,
+  ) async {
+    return _queryAdapter.query(
+        'UPDATE OR ABORT Students SET action = ?1 WHERE childID = ?2',
+        mapper: (Map<String, Object?> row) => row.values.first as int,
+        arguments: [action, id]);
+  }
+
+  @override
+  Future<int?> updatePickupStudent(List<int> ids) async {
+    const offset = 1;
+    final _sqliteVariablesForIds =
+        Iterable<String>.generate(ids.length, (i) => '?${i + offset}')
+            .join(',');
+    return _queryAdapter.query(
+        'UPDATE OR ABORT Students SET action = \"Arrived\" WHERE childID IN (' +
+            _sqliteVariablesForIds +
+            ')',
+        mapper: (Map<String, Object?> row) => row.values.first as int,
+        arguments: [...ids]);
   }
 
   @override
@@ -183,6 +242,11 @@ class _$StudentDao extends StudentDao {
   Future<void> insertStudents(List<Student> students) async {
     await _studentInsertionAdapter.insertList(
         students, OnConflictStrategy.abort);
+  }
+
+  @override
+  Future<void> updateStudent(Student student) async {
+    await _studentUpdateAdapter.update(student, OnConflictStrategy.abort);
   }
 
   @override

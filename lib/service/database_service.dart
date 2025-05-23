@@ -21,7 +21,6 @@ class DatabaseService {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final path = p.join(documentsDirectory.path, 'school_bus.db');
     final database = await $FloorAppDatabase.databaseBuilder(path).build();
-
     return database;
   }
 
